@@ -1,0 +1,3 @@
+// Generated at deploy time by scripts/deploy_frontend.sh — do not commit real config.js.
+// Example only. Full movers endpoint URL (include /movers).
+window.API_URL = "https://YOUR_API_ID.execute-api.us-east-1.amazonaws.com/movers";

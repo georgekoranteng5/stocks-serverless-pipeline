@@ -1,0 +1,12 @@
+# Optional remote state for CI / shared apply.
+# Copy to backend.tf (gitignored pattern: keep backend.tf local or commit once configured)
+# and create the bucket manually once, then:
+#   terraform init -migrate-state
+#
+# terraform {
+#   backend "s3" {
+#     bucket = "YOUR_TF_STATE_BUCKET"
+#     key    = "stocks-pipeline/terraform.tfstate"
+#     region = "us-east-1"
+#   }
+# }

@@ -1,0 +1,46 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Secrets — track *.tfvars.example; never commit real values
+**/terraform.tfvars
+**/*.tfvars
+!**/terraform.tfvars.example
+!**/*.tfvars.example
+.env
+.env.*
+
+# Lambda deployment packages / local build artifacts
+*.zip
+terraform/modules/**/build/
+
+# Frontend — generated at deploy from Terraform output (never commit live API URL)
+frontend/config.js
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+env/
+
+# Local challenge brief (not part of the deliverable)
+*.docx
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

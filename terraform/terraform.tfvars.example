@@ -1,0 +1,12 @@
+# Copy to terraform.tfvars and fill in real values.
+# terraform.tfvars is gitignored — never commit secrets.
+
+aws_region   = "us-east-1"
+project_name = "stocks_pipeline"
+environment  = "dev"
+
+# Required — Massive.com or Finnhub API key
+stock_api_key = "YOUR_STOCK_API_KEY_HERE"
+
+# Optional — override daily ingestion schedule (default: cron(0 13 * * ? *))
+# ingestion_schedule_expression = "cron(0 21 * * ? *)"
