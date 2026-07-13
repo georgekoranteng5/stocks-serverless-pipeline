@@ -6,7 +6,7 @@ Daily tech-watchlist top-mover tracker on AWS Free Tier: EventBridge wakes an in
 
 | Item | Where |
 |------|--------|
-| Public GitHub repo | _(add link after you push)_ |
+| Public GitHub repo | https://github.com/georgekoranteng5/stocks-serverless-pipeline |
 | Live frontend | _(paste S3 website URL after deploy)_ |
 | Live API | `terraform output -raw movers_url` |
 
