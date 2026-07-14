@@ -71,9 +71,41 @@ aws lambda invoke --function-name "$FUNCTION" \
 
 `GET /movers` → JSON array newest-first; `200` + `[]` if empty; `500` + `{"error":"..."}` on DynamoDB errors (no stack traces to clients). CORS enabled on API + Lambda headers. **No API auth** (public, per spec).
 
+```bash
+curl -i https://dxme3hdmc7.execute-api.us-east-1.amazonaws.com/movers
+# or: curl -i "$(terraform -chdir=terraform output -raw movers_url)"
+```
+
+Example `200` body:
+
+```json
+[
+  {
+    "date": "2026-07-10",
+    "ticker": "NVDA",
+    "percent_change": 4.4356,
+    "closing_price": 210.96
+  },
+  {
+    "date": "2026-07-09",
+    "ticker": "AMZN",
+    "percent_change": 3.0106,
+    "closing_price": 247.04
+  }
+]
+```
+
 ### Frontend
 
 Plain HTML/CSS/JS table (green gains / red losses). Live API URL is **not** hardcoded — `scripts/deploy_frontend.sh` writes gitignored `frontend/config.js` from Terraform output.
+
+**Live URL:** http://stocks-pipeline-dev-frontend-470656906232.s3-website-us-east-1.amazonaws.com
+
+After infra or API URL changes (or a hard browser cache), redeploy / hard-refresh:
+
+```bash
+./scripts/deploy_frontend.sh
+```
 
 ## Prerequisites
 
@@ -215,3 +247,7 @@ scripts/deploy_frontend.sh
 terraform/                # Root + modules (dynamodb, lambdas, eventbridge, api_gateway, s3_frontend)
 .github/workflows/        # Terraform CI
 ```
+
+## License
+
+No license — published for private take-home / interview evaluation only. Not intended for production reuse.
