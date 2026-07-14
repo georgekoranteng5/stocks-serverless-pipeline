@@ -7,8 +7,14 @@ Daily tech-watchlist top-mover tracker on AWS Free Tier: EventBridge wakes an in
 | Item | Where |
 |------|--------|
 | Public GitHub repo | https://github.com/georgekoranteng5/stocks-serverless-pipeline |
-| Live frontend | _(paste S3 website URL after deploy)_ |
-| Live API | `terraform output -raw movers_url` |
+| Live frontend | http://stocks-pipeline-dev-frontend-470656906232.s3-website-us-east-1.amazonaws.com |
+| Live API | https://dxme3hdmc7.execute-api.us-east-1.amazonaws.com/movers |
+
+### Submission copy-paste
+
+1. **GitHub:** https://github.com/georgekoranteng5/stocks-serverless-pipeline  
+2. **Live frontend:** http://stocks-pipeline-dev-frontend-470656906232.s3-website-us-east-1.amazonaws.com  
+3. **Trade-offs / challenges:** see [Design notes / trade-offs](#design-notes--trade-offs) below (short version ready for the email reply).
 
 ## Architecture
 
@@ -163,14 +169,31 @@ Frontend sync remains `./scripts/deploy_frontend.sh` (can be added to CI later).
 
 ## Design notes / trade-offs
 
+### Brief note for graders (deliverable #3)
+
+Because this stack was built and submitted on a short timeline, the EventBridge cron (`cron(0 13 * * ? *)`) can only have produced **one natural daily write** since deploy. Waiting a full week for seven cron runs wasn’t practical before the deadline.
+
+To still demonstrate the end-to-end path honestly, I:
+
+- Verified the **schedule rule**, least-privilege invoke permission, and **manual ingestion** write to DynamoDB  
+- Verified **`GET /movers`** returns the last **7 calendar days** via `BatchGetItem` (empty `[]` when no keys match; sorted newest-first)  
+- Added an optional invoke payload `{"trade_date":"YYYY-MM-DD"}` so operators can backfill **real** Massive OHLC for prior sessions (not mocked rows). EventBridge still sends `{}` and auto-resolves the latest session  
+
+So the dashboard may show a few historical winners from that backfill, while the production default remains once-per-day automation. After a week of cron, the table fills the same way without overrides.
+
+### Other deliberate trade-offs
+
 | Topic | Choice |
 |-------|--------|
-| **Least-privilege IAM** | Separate roles — ingestion `PutItem` only; retrieval read actions only; EventBridge/`apigateway` invoke permissions scoped to specific source ARNs |
+| **Least-privilege IAM** | Separate roles — ingestion `PutItem` only; retrieval read actions only; EventBridge / API Gateway invoke permissions scoped to specific source ARNs |
 | **Error handling** | Ingestion: retries + partial success; retrieval: `500` JSON errors, empty `[]` is success |
 | **Tagging** | Provider `default_tags` (`Project`, `Environment`, `ManagedBy`) — no duplicated tags on every resource |
-| **PK = date** | Simple one-item-per-day model; last-7 uses `BatchGetItem` instead of a GSI |
+| **PK = date** | Simple one-item-per-day model; last-7 uses `BatchGetItem` instead of a GSI (a constant PK + `date` sort key would enable a single `Query` + `Limit=7`) |
 | **Public S3 + public API** | Required for the static SPA + browser `fetch`; S3 policy is **GetObject only** |
 | **Secrets** | `terraform.tfvars` / `config.js` gitignored — never baked into the repo |
+| **Massive free-tier limits** | Sequential watchlist calls can 401/rate-limit mid-run; handler continues with whatever tickers succeed rather than failing the whole day when at least one bar is available |
+| **HTTP API vs REST** | Chose API Gateway **HTTP API** (v2) for simpler proxy + CORS and lower Free Tier friction |
+| **CI apply** | GitHub Actions always runs `fmt`/`validate`; AWS `plan`/`apply` are opt-in via secrets + `ENABLE_TERRAFORM_AWS` (remote state recommended before CI apply) |
 
 ## Environment variables
 
