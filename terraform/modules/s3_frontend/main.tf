@@ -1,8 +1,10 @@
 data "aws_caller_identity" "current" {}
 
 locals {
-  # Account ID suffix keeps the bucket name globally unique without a random provider.
-  bucket_name = "${var.project_name}-${var.environment}-frontend-${data.aws_caller_identity.current.account_id}"
+  # S3 bucket names cannot contain underscores — normalize the project prefix.
+  # Account ID suffix keeps the name globally unique without a random provider.
+  name_prefix = replace("${var.project_name}-${var.environment}", "_", "-")
+  bucket_name = "${local.name_prefix}-frontend-${data.aws_caller_identity.current.account_id}"
 }
 
 resource "aws_s3_bucket" "frontend" {
