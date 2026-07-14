@@ -48,6 +48,18 @@ Last-7-days reads use **BatchGetItem** for seven known date keys (PK-only design
 - Partial failure: one ticker can fail; run continues
 - Total failure: raises → CloudWatch marks invoke failed
 - Secrets: `STOCK_API_KEY` from env (Terraform injects from gitignored `terraform.tfvars`)
+- Optional override: `{"trade_date":"YYYY-MM-DD"}` in the invoke payload backfills that session (EventBridge sends `{}` → auto-resolve)
+
+```bash
+FUNCTION=$(terraform -chdir=terraform output -raw ingestion_lambda_function_name)
+aws lambda invoke --function-name "$FUNCTION" --payload '{}' \
+  --cli-binary-format raw-in-base64-out /tmp/ingestion-out.json
+
+# Backfill a historical day (real Massive OHLC for that date)
+aws lambda invoke --function-name "$FUNCTION" \
+  --payload '{"trade_date":"2026-07-08"}' \
+  --cli-binary-format raw-in-base64-out /tmp/backfill.json
+```
 
 ### Retrieval + API
 

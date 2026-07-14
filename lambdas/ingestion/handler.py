@@ -183,11 +183,33 @@ def put_mover_item(table_name: str, item: dict[str, Any]) -> None:
     )
 
 
+def parse_trade_date_override(event: dict[str, Any] | None) -> date | None:
+    """
+    Optional backfill/demo override: {"trade_date": "YYYY-MM-DD"}.
+    EventBridge schedules send {} / no key → auto-resolve latest session.
+    """
+    if not event:
+        return None
+    raw = event.get("trade_date")
+    if raw is None or raw == "":
+        return None
+    try:
+        return date.fromisoformat(str(raw))
+    except ValueError as exc:
+        raise ValueError(f"trade_date must be YYYY-MM-DD, got {raw!r}") from exc
+
+
 def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     table_name = os.environ["DYNAMODB_TABLE_NAME"]
     api_key = os.environ["STOCK_API_KEY"]
 
-    trade_date = resolve_trade_date(api_key)
+    override = parse_trade_date_override(event if isinstance(event, dict) else None)
+    if override is not None:
+        trade_date = override
+        logger.info("Using trade_date override from event: %s", trade_date.isoformat())
+    else:
+        trade_date = resolve_trade_date(api_key)
+
     successes: list[dict[str, Any]] = []
     failures: list[str] = []
 
@@ -223,6 +245,8 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         raise RuntimeError(message)
 
     winner = find_top_mover(successes)
+    # Persist the requested session date (override or resolved), not a per-ticker quirk.
+    winner["date"] = trade_date.isoformat()
     winner["created_at"] = datetime.now(timezone.utc).isoformat()
 
     put_mover_item(table_name, winner)
